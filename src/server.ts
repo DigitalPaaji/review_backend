@@ -11,6 +11,7 @@ import errorHandler from "./helper/errorHandler";
 
 import ClinetAuth from "./routes/authRoutes"
 import reviewAuth from "./routes/reviewAuth"
+import crmRoutes from "./routes/crmRoutes"
 
 
 
@@ -55,11 +56,12 @@ app.use(cors({
 
     app.use("/api/v1/client/auth",ClinetAuth)
     app.use("/api/v1/review",reviewAuth)
-   
-
-
-
-
+    
+    
+    
+    
+    ///crm
+    app.use("/api/v1/crm/review",crmRoutes)
 
 
 
