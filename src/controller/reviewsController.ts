@@ -1,6 +1,8 @@
 import type { NextFunction, Request, Response } from "express";
 import OpenAI from "openai";
 import Client from "../models/clientModel";
+import User from "../models/normaluserAdmin";
+import mongoose from "mongoose";
 
 
 const openai = new OpenAI({
@@ -75,7 +77,7 @@ Requested rating: ${rating}/5
 
 
 1. Generate exactly 5 different review options.
-2. Each review should be approximately 40-80 words.
+2. Each review should be approximately 20-25 words.
 3. Every review must be relevant to the business.
 4. Use the business name naturally where appropriate, but do not repeat it excessively.
 5. Avoid making all five reviews sound alike but make sure all reviews must be as per the perspective of a customer giving genuine and honest review in casual tone.
@@ -160,6 +162,8 @@ The response must be an object in exactly this format:
      
       );
     }
+
+
   const rawText = response.choices?.[0]?.message?.content;
 
 
@@ -237,18 +241,32 @@ if (
 export const addReview = async(req:Request,res:Response,next:NextFunction)=>{
     try {
         const clientId = req.params.id;
-        const {rating=5,text=""} = req.body
-      
+        const {rating=5,text="",userId} = req.body
+         
         const time = new Date(Date.now());
         
          const client = await Client.findById(clientId);
-         
+          const user = await User.findById(userId);
+   
+          if(!user){
+            return res.status(404).json({success:false,message:"User not found"})
+          }
+
+
          if(!client){
             return res.status(404).json({success:false,message:"Client Not Found"})
          }
-         
-         client.reviews.push({rating:Number(rating),text,time})
+
+        const fullReview = {text,rating,time,client:new mongoose.Types.ObjectId(clientId as string)}
+        const clientReview = {text,rating,time,user:user._id}
+           
+
+
+         client.reviews.push(clientReview)
+         user.reviews.push(fullReview)
+         user.save()
    await client.save()
+
 
    return res.status(200).json({success:true})
 

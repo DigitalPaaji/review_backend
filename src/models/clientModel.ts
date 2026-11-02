@@ -6,7 +6,10 @@ interface IReviews {
   rating: number;
   text: string;
   time: Date;
+  user:mongoose.Types.ObjectId;
 }
+
+
 
 
 export interface IClient extends Document {
@@ -80,7 +83,8 @@ const ClientSchema = new Schema<IClient>(
       required: true,
     },
     reviews:[
-      {rating:{
+      {
+        rating:{
         type:Number
       },
       text:{
@@ -88,6 +92,10 @@ const ClientSchema = new Schema<IClient>(
       },
       time:{
         type:Date
+      },
+      user:{
+      type: mongoose.Schema.Types.ObjectId,
+      ref:"User"
       }
 
       }
