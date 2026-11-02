@@ -78,8 +78,8 @@ export const SendOtp = async (
     }
 
     // 7. Generate OTP
-    // const otp = randomInt(100000, 1000000).toString();
-  const otp =`111111`
+    const otp = randomInt(100000, 1000000).toString();
+
     const cacheKey = `review-client-verify:${phone}`;
 
     // 8. Save OTP in Redis for 5 minutes
@@ -88,17 +88,17 @@ export const SendOtp = async (
     });
 
     // 9. Send OTP using Authkey
-    // const smsResult = await sendSms(phone, otp);
+    const smsResult = await sendSms(phone, otp);
 
-    // if (!smsResult.success) {
-    //   // Remove OTP if SMS sending fails
-    //   await redisClient.del(cacheKey);
+    if (!smsResult.success) {
 
-    //   return res.status(502).json({
-    //     success: false,
-    //     message: "Unable to send OTP. Please try again.",
-    //   });
-    // }
+      await redisClient.del(cacheKey);
+
+      return res.status(502).json({
+        success: false,
+        message: "Unable to send OTP. Please try again.",
+      });
+    }
 
     // 10. Success response
     return res.status(200).json({

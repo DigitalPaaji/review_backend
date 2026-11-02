@@ -3,24 +3,27 @@ import axios from "axios";
 
 const sendSms = async (mobile: string, otp: string) => {
   try {
-    const response = await axios.get(
-      "https://api.authkey.io/request",
+     const response = await axios.post(
+      "https://console.authkey.io/restapi/requestjson.php",
       {
-        params: {
-          authkey: process.env.AUTHKEY_API_KEY,
-          mobile,
-          country_code: "91",
-          sid: process.env.AUTHKEY_OTP_SID,
-          otp,
+        country_code: "91",
+        mobile,
+        wid: process.env.AUTHKEY_WHATSAPP_WID,
+        type: "text",
+        bodyValues: {
+          "1": otp,
+        },
+      },
+      {
+        headers: {
+          Authorization: `Basic ${process.env.AUTHKEY_API_KEY}`,
+          "Content-Type": "application/json",
         },
         timeout: 15000,
       }
     );
 
-    console.log("Authkey Response:", response.data);
-
-    // Do not assume HTTP 200 means SMS was accepted.
-    // Confirm the actual success response from Authkey.
+   
     return {
       success: true,
       data: response.data,

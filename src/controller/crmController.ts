@@ -68,9 +68,24 @@ export const getReviews = async(req:Request,res:Response,next:NextFunction)=>{
 
     return res.status(200).json({success:true,client});
 
-    
 
 
+
+
+
+    } catch (error) {
+        next(error)
+    }
+}
+
+export const deleteClient= async(req:Request,res:Response,next:NextFunction)=>{
+    try {
+        const clientId = req.params.id;
+
+        const client = await Client.findByIdAndDelete(clientId)
+
+        return res.status(200).json({success:true})
+           
 
 
     } catch (error) {
