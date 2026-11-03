@@ -1,11 +1,13 @@
 import mongoose, { Document, Model, Schema } from "mongoose";
 import { reviewDB } from "../helper/database";
 
-interface IReview extends Document{
+export interface IReview extends Document{
     rating: number;
      text: string;
      client:mongoose.Types.ObjectId;
      user:mongoose.Types.ObjectId;
+ createdAt: Date;
+  updatedAt: Date;
 }
 
 

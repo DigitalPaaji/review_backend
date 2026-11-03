@@ -5,6 +5,7 @@ import sendSms from "../helper/sendSms";
 import redisClient from "../helper/redisServer";
 import bcrypt from "bcryptjs"
 import JWT from "jsonwebtoken"
+import { IReview } from "../models/reviewsModel";
 
 
 export const SendOtp = async (
@@ -368,8 +369,8 @@ export const getDashboadData = async (
     }
 
     const client = await Client.findById(user._id)
-      .select("name businessName reviews active hasGeneratedQr savedQrUrl expiryDate")
-      .lean();
+      .select("name businessName reviews active hasGeneratedQr savedQrUrl expiryDate").populate("reviews")
+  
 
     if (!client) {
       return res.status(404).json({
@@ -377,12 +378,12 @@ export const getDashboadData = async (
         message: "Client not found",
       });
     }
-
-    const reviews = (client.reviews || [])
-      .filter((review) => review.time && !Number.isNaN(new Date(review.time).getTime()))
+console.log(client)
+    const reviews = (client.reviews as unknown as IReview[])
+      .filter((review : IReview) => review?.createdAt && !Number.isNaN(new Date(review.createdAt).getTime()))
       .sort(
         (a, b) =>
-          new Date(b.time).getTime() - new Date(a.time).getTime()
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
       );
 
     const now = new Date();
@@ -391,13 +392,13 @@ export const getDashboadData = async (
 
     // Today's reviews
     const todayReviews = reviews.filter(
-      (review) => getIndiaDateKey(new Date(review.time)) === todayKey
+      (review) => getIndiaDateKey(new Date(review.createdAt)) === todayKey
     );
 
     // This month's reviews
     const thisMonthReviews = reviews.filter(
       (review) =>
-        getIndiaDateKey(new Date(review.time)).slice(0, 7) ===
+        getIndiaDateKey(new Date(review.createdAt)).slice(0, 7) ===
         currentMonthKey
     );
 
@@ -431,7 +432,7 @@ export const getDashboadData = async (
       const key = getIndiaDateKey(date);
 
       const count = reviews.filter(
-        (review) => getIndiaDateKey(new Date(review.time)) === key
+        (review) => getIndiaDateKey(new Date(review.createdAt)) === key
       ).length;
 
       return {
@@ -447,7 +448,7 @@ export const getDashboadData = async (
     );
 
     const last30DaysReviews = reviews.filter((review) => {
-      const reviewTime = new Date(review.time).getTime();
+      const reviewTime = new Date(review.createdAt).getTime();
 
       return (
         reviewTime >= last30DaysStart.getTime() &&
@@ -459,14 +460,14 @@ export const getDashboadData = async (
     const recentReviews = reviews.slice(0, 5).map((review) => ({
       rating: review.rating,
       text: review.text,
-      time: review.time,
+      time: review.createdAt,
     }));
 
     // Today's reviews list
     const todayReviewsList = todayReviews.map((review) => ({
       rating: review.rating,
       text: review.text,
-      time: review.time,
+      time: review.createdAt,
     }));
 
     return res.status(200).json({
