@@ -1,13 +1,6 @@
 import mongoose, { Schema, Document, Model } from "mongoose";
 import { reviewDB } from "../helper/database";
 
-interface IReviews {
-  
-  rating: number;
-  text: string;
-  time: Date;
-  user:mongoose.Types.ObjectId;
-}
 
 
 
@@ -25,7 +18,7 @@ export interface IClient extends Document {
   savedQrUrl: string;
   expiryDate: Date;
   createdAt: Date;
-  reviews:IReviews[]
+  reviews:mongoose.Types.ObjectId[]
   updatedAt: Date;
 }
 
@@ -82,24 +75,7 @@ const ClientSchema = new Schema<IClient>(
       type: Date,
       required: true,
     },
-    reviews:[
-      {
-        rating:{
-        type:Number
-      },
-      text:{
-        type:String
-      },
-      time:{
-        type:Date
-      },
-      user:{
-      type: mongoose.Schema.Types.ObjectId,
-      ref:"User"
-      }
-
-      }
-    ]
+    reviews:[{type:mongoose.Schema.Types.ObjectId,ref:"Review"}]
   },
   {
     timestamps: true,

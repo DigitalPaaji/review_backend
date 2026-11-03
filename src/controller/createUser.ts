@@ -2,56 +2,57 @@ import type { NextFunction, Request, Response } from "express";
 import User from "../models/normaluserAdmin";
 import Client from "../models/clientModel";
 import JWT from "jsonwebtoken"
+import Review from "../models/reviewsModel";
 
 export const createUser= async(req:Request,res:Response,next:NextFunction)=>{
     try {
         const {name ,email,phonenumber,text,clientId,rating} = req.body;
+     if (!name || !phonenumber || !clientId || !text?.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: "Please provide all required information",
+      });
+    }
+
         const client = await Client.findById(clientId)
        if(!client){
          return res.status(404).json({success:false,message:"Client not Found "})
        }
-const time = new Date(Date.now());
+ 
 
 
-   const fullReview = {
-            text,
-            rating,
-            time,
-            client:clientId
-         }
+ 
 
 
 
-        let  findAllready = await User.findOne({phonenumber});
-        if(findAllready){
+           let user = await User.findOne({ phonenumber });
+        if (!user) {
+          user = await User.create({
+          name,
+        email,
+        phonenumber,
+      });
+    }
+const review = await Review.create({
+      text,
+      rating,
 
-        
-          findAllready.reviews =[...findAllready.reviews,fullReview]
-           await  findAllready.save();
-
-        }else{
-
-           findAllready= await User.create({
-        name ,email,phonenumber,reviews:[fullReview]
-           })
-        }
+      client: client._id,
+      user: user._id,
+    });
+  
+ client.reviews.push(review._id);
+    user.reviews.push(review._id);
 
 
-           const fullReviewClinet = {
-            text,
-            rating,
-            time,
-            user:findAllready._id
-         }
-
-       
-client.reviews.push(fullReviewClinet)
-
-await client.save()
+           await Promise.all([
+      client.save(),
+      user.save(),
+    ]);
 
 
     const token = JWT.sign(
-      { id: findAllready._id },
+      { id: user._id },
       process.env.JWT_SECRET!,
       { expiresIn: "90d" }
     );

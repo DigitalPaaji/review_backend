@@ -3,6 +3,7 @@ import OpenAI from "openai";
 import Client from "../models/clientModel";
 import User from "../models/normaluserAdmin";
 import mongoose from "mongoose";
+import Review from "../models/reviewsModel";
 
 
 const openai = new OpenAI({
@@ -238,34 +239,47 @@ if (
 }
 
 
+
+
+
+
 export const addReview = async(req:Request,res:Response,next:NextFunction)=>{
     try {
         const clientId = req.params.id;
         const {rating=5,text="",userId} = req.body
          
-        const time = new Date(Date.now());
+     
         
-         const client = await Client.findById(clientId);
-          const user = await User.findById(userId);
-   
-          if(!user){
-            return res.status(404).json({success:false,message:"User not found"})
-          }
+            const [client, user] = await Promise.all([
+      Client.findById(clientId),
+      User.findById(userId),
+    ]);
+
+    if (!client) {
+      return res.status(404).json({
+        success: false,
+        message: "Client not found",
+      });
+    }
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+        const fullReview = {text,rating,client:new mongoose.Types.ObjectId(clientId as string),user:user._id}
+    
+            const reviewCreat =   await Review.create(fullReview)
 
 
-         if(!client){
-            return res.status(404).json({success:false,message:"Client Not Found"})
-         }
-
-        const fullReview = {text,rating,time,client:new mongoose.Types.ObjectId(clientId as string)}
-        const clientReview = {text,rating,time,user:user._id}
-           
-
-
-         client.reviews.push(clientReview)
-         user.reviews.push(fullReview)
-         user.save()
-   await client.save()
+         client.reviews.push(reviewCreat._id)
+         user.reviews.push(reviewCreat._id)
+          await Promise.all([
+      client.save(),
+      user.save(),
+    ]);
 
 
    return res.status(200).json({success:true})
@@ -283,12 +297,22 @@ export const addReview = async(req:Request,res:Response,next:NextFunction)=>{
     }
 }
 
+
+
+
+
 export const getMyReviews = async(req:Request,res:Response,next:NextFunction)=>{
   try {
        const user = req.user;
 
 
-       const client = await Client.findById(user?._id);
+const client = await Client.findById(user?._id).populate({
+  path: "reviews",
+  populate: {
+    path: "user",
+    select: "name email phonenumber", // Optional: select only necessary fields
+  },
+});
 
        if(!client){return res.status(502).json({success: false,message:"client not found"})}
     

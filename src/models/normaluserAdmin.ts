@@ -1,17 +1,12 @@
 import mongoose, { Document, Model, Schema } from "mongoose";
 import { reviewDB } from "../helper/database";
-export interface IRev{
- rating: number;
-  text: string;
-  time: Date;
-  client:mongoose.Types.ObjectId;
-}
+
 
 export interface IUser extends Document{
   name:string;
   email:string;
   phonenumber:string; 
-  reviews:IRev[ ]
+   reviews:mongoose.Types.ObjectId[]
 }
 
 const users = new Schema({
@@ -31,23 +26,7 @@ name:{
     unique:true,
     trim:true
    },
-    reviews:[
-    {
-      rating:{
-        type:Number
-      },
-      text:{
-        type:String
-      },
-      time:{
-        type:Date
-      },
-      client:{
-        type: mongoose.Schema.Types.ObjectId,
-        ref:"Client"
-      }
-    }
-      ]
+  reviews:[{type:mongoose.Schema.Types.ObjectId,ref:"Review"}]
 
 
 },{
