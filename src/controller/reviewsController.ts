@@ -95,7 +95,7 @@ Do not use hashtags.
 Do not use emojis unless they naturally fit the customer's tone.
 language hinglish 
 
-Business: ${businessName.trim()}
+
 Location: ${location || "Not specified"}
 Industry: ${industry || "Not specified"}
 Description: ${description || "Not specified"}
