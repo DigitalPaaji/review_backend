@@ -67,19 +67,28 @@ The response must be an object in exactly this format:
     "Review 5"
   ]
 }
-  data is :
-Location: ${location || "Not specified"}
+  data is :Location: ${location || "Not specified"}
 Industry: ${industry || "Not specified"}
 Description: ${description || "Not specified"}
 Services: ${services || "Not specified"}
 
 Requested rating: ${rating}/5
 
+IMPORTANT:
+These are review DRAFTS/SUGGESTIONS for customers.
+Do not pretend that you personally visited the business.
+Do not invent highly specific facts that were not provided.
+Do not mention that you are an AI.
+Do not use marketing language.
+Do not use hashtags.
+Do not use emojis unless they naturally fit the customer's tone.
+
 
 make review accoding to rating (1-5):${rating}
 1. Generate exactly 5 different review options.
 2. Each review should be approximately 20-25 words.
 3. Make them sound like different real customers.
+4. send review like noraml people shear .
 `
 
 const prompqt = `
