@@ -53,7 +53,36 @@ const rating = Number(stars);
       );
     }
 
-const prompt = `
+
+const prompt=`
+Return ONLY valid JSON.
+
+The response must be an object in exactly this format:
+{
+  "reviews": [
+    "Review 1",
+    "Review 2",
+    "Review 3",
+    "Review 4",
+    "Review 5"
+  ]
+}
+  data is :Business: ${businessName.trim()}
+Location: ${location || "Not specified"}
+Industry: ${industry || "Not specified"}
+Description: ${description || "Not specified"}
+Services: ${services || "Not specified"}
+
+Requested rating: ${rating}/5
+
+
+make review accoding to rating (1-5):${rating}
+1. Generate exactly 5 different review options.
+2. Each review should be approximately 20-25 words.
+3. Make them sound like different real customers.
+`
+
+const prompqt = `
 You are an expert at writing realistic customer feedback for local businesses.
 
 IMPORTANT:
