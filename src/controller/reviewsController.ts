@@ -67,7 +67,7 @@ The response must be an object in exactly this format:
     "Review 5"
   ]
 }
-  data is :Business: ${businessName.trim()}
+  data is :
 Location: ${location || "Not specified"}
 Industry: ${industry || "Not specified"}
 Description: ${description || "Not specified"}
@@ -95,7 +95,7 @@ Do not use hashtags.
 Do not use emojis unless they naturally fit the customer's tone.
 language hinglish 
 
-
+Business: ${businessName.trim()}
 Location: ${location || "Not specified"}
 Industry: ${industry || "Not specified"}
 Description: ${description || "Not specified"}
