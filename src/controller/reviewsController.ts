@@ -91,10 +91,13 @@ make review accoding to rating (1-5):${rating}
 4. send review like noraml people shear .
 `
 
-const prompqt = `
-You are an expert at writing realistic customer feedback for local businesses.
 
-IMPORTANT:
+
+
+const prompqt = `
+  You are an expert at writing realistic customer feedback for local businesses.
+
+IMPORTANT:  
 These are review DRAFTS/SUGGESTIONS for customers.
 Do not pretend that you personally visited the business.
 Do not invent highly specific facts that were not provided.

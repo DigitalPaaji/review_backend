@@ -23,7 +23,7 @@ const sendSms = async (mobile: string, otp: string) => {
       }
     );
 
-   
+
     return {
       success: true,
       data: response.data,

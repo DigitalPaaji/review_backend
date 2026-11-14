@@ -14,6 +14,8 @@ import reviewAuth from "./routes/reviewAuth"
 
 
 import userRoutes from "./routes/userRoutes"
+import formpageAuthRoute from "./routes/formpageAuthRoute"
+import formPageUserRoute from "./routes/formPageUserRoute"
 
 
 
@@ -52,6 +54,8 @@ app.use(cors({
 
 
     app.use(express.json());
+    app.use("/uploads",express.static(path.join(process.cwd(), "uploads")));
+    
     app.use(express.urlencoded({ extended: true }));
     app.get("/ping",async(req:Request,res:Response)=>{return res.status(200).send("Pong")})
 
@@ -72,7 +76,11 @@ app.use(cors({
     
     //userr
     app.use("/api/v1/user",userRoutes)
-
+    
+    
+    //form page
+    app.use("/api/v1/form/auth",formpageAuthRoute)
+    app.use("/api/v1/form/user",formPageUserRoute)
 
 
 

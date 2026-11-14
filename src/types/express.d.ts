@@ -1,10 +1,12 @@
 import { IClient } from "../models/clientModel";
+import { IFormAdmin } from "../models/FormAdmin";
 
 
 declare global {
   namespace Express {
     interface Request {
-    user?:IClient
+    user?:IClient,
+    form?:IFormAdmin?
     }
   }
 }
