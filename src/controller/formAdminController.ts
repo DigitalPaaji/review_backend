@@ -571,6 +571,8 @@ export const updateForm = async (
 };
 
 
+
+
 export const deleteForm = async (
   req: Request,
   res: Response,
@@ -580,27 +582,49 @@ export const deleteForm = async (
     const formId = req.params.id;
     const user = req.form as any;
 
+   
+    // Check admin
     const formAdmin = await FormAdmin.findById(user._id);
+
     if (!formAdmin) {
-      return res.status(401).json({ success: false, mesage: "User not found" });
+      return res.status(401).json({
+        success: false,
+        message: "User not found",
+      });
     }
 
-    const deleteFormData = await FormPage.findOneAndDelete({
+    // Find form owned by this admin
+    const deleteFormData = await FormPage.findOne({
       _id: formId,
       createdBy: user._id,
     });
+
     if (!deleteFormData) {
-      return res
-        .status(401)
-        .json({ success: false, message: "Form Not Found" });
+      return res.status(404).json({
+        success: false,
+        message: "Form not found",
+      });
     }
 
+    // Delete form
+    await deleteFormData.deleteOne();
+
+    // Remove form reference from admin
     formAdmin.formPage = formAdmin.formPage.filter(
-      (item) => item.toString() !== formId.toString(),
+      (item) => item.toString() !== formId,
     );
+
     await formAdmin.save();
 
-    return res.status(200).json({ success: true, message: "Form Delete" });
+    // Delete banner image if available
+    if (deleteFormData.bannerImage) {
+      await deleteImage(deleteFormData.bannerImage);
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Form deleted successfully",
+    });
   } catch (error) {
     next(error);
   }
