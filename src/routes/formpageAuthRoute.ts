@@ -2,6 +2,7 @@ import express from "express";
 import { createForm, deleteForm, GetDashboardData, getFormLeads, getMyForm, loginFormAdmin, logout, SendOtpFormAdmin, updateForm, verifyForm_Admin, verifyOtpFormAdmin } from "../controller/formAdminController";
 import { VerifyFormAdmin } from "../middleware/verifyFormAdmin";
 import { upload } from "../helper/UploadMulterImages";
+import { getbyToken } from "../controller/crmController";
 const routes = express.Router()
 
 routes.post("/account-requests",SendOtpFormAdmin)
@@ -16,7 +17,7 @@ routes.delete("/delete/:id",VerifyFormAdmin,deleteForm)
 routes.get("/leads/:id",VerifyFormAdmin,getFormLeads)
 
 routes.get("/dashboard",VerifyFormAdmin,GetDashboardData)
-
+routes.put("/getbytoken",getbyToken)
 
 
 
