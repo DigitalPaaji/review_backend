@@ -8,6 +8,7 @@ import FormAdmin from "../models/FormAdmin";
 import FormPage from "../models/formPageSchema";
 import FormdataLeads from "../models/formSendSchema";
 import { deleteImage } from "../helper/deleteImage";
+import mongoose from "mongoose";
 
 export const SendOtpFormAdmin = async (
   req: Request,
@@ -571,8 +572,6 @@ export const updateForm = async (
 };
 
 
-
-
 export const deleteForm = async (
   req: Request,
   res: Response,
@@ -722,6 +721,9 @@ export const getFormLeads = async (
 
 
 
+
+
+
 export const getForm = async (
   req: Request,
   res: Response,
@@ -775,3 +777,358 @@ export const SubmitedForm = async (
     next(error);
   }
 };
+
+
+export const GetDashboardData = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+   const user = req.form as any;
+   const userId = user?._id;
+
+   if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
+      return res.status(401).json({
+        success: false,
+        message: "Unauthorized user",
+      });
+    }
+
+    const objectUserId = new mongoose.Types.ObjectId(userId);
+
+    // IST date range
+    const now = new Date();
+
+    const todayStart = new Date(now);
+    todayStart.setHours(0, 0, 0, 0);
+
+    const todayEnd = new Date(now);
+    todayEnd.setHours(23, 59, 59, 999);
+
+    // Last 7 days
+    const sevenDaysAgo = new Date(todayStart);
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6);
+
+    // Last 6 months
+    const sixMonthsAgo = new Date(
+      now.getFullYear(),
+      now.getMonth() - 5,
+      1
+    );
+
+    const [
+      totalForms,
+      publishedForms,
+      draftForms,
+      inactiveForms,
+
+      totalLeads,
+      todayLeads,
+      newLeads,
+      readLeads,
+      archivedLeads,
+
+      recentLeads,
+      recentForms,
+      weeklyStats,
+      monthlyStats,
+    ] = await Promise.all([
+
+      // ---------------- FORMS ----------------
+
+      FormPage.countDocuments({
+        createdBy: objectUserId,
+      }),
+
+      FormPage.countDocuments({
+        createdBy: objectUserId,
+        status: "published",
+      }),
+
+      FormPage.countDocuments({
+        createdBy: objectUserId,
+        status: "draft",
+      }),
+
+      FormPage.countDocuments({
+        createdBy: objectUserId,
+        status: "inactive",
+      }),
+
+      // ---------------- LEADS ----------------
+
+      FormdataLeads.countDocuments({
+        userId: objectUserId,
+      }),
+
+      FormdataLeads.countDocuments({
+        userId: objectUserId,
+        createdAt: {
+          $gte: todayStart,
+          $lte: todayEnd,
+        },
+      }),
+
+      FormdataLeads.countDocuments({
+        userId: objectUserId,
+        status: "new",
+      }),
+
+      FormdataLeads.countDocuments({
+        userId: objectUserId,
+        status: "read",
+      }),
+
+      FormdataLeads.countDocuments({
+        userId: objectUserId,
+        status: "archived",
+      }),
+
+      // ---------------- RECENT LEADS ----------------
+
+      FormdataLeads.find({
+        userId: objectUserId,
+      })
+        .populate("formId", "title slug")
+        .sort({ createdAt: -1 })
+        .limit(10)
+        .lean(),
+
+      // ---------------- RECENT FORMS ----------------
+
+      FormPage.find({
+        createdBy: objectUserId,
+      })
+        .select("title slug status createdAt")
+        .sort({ createdAt: -1 })
+        .limit(5)
+        .lean(),
+
+      // ---------------- WEEKLY CHART ----------------
+
+      FormdataLeads.aggregate([
+        {
+          $match: {
+            userId: objectUserId,
+            createdAt: {
+              $gte: sevenDaysAgo,
+              $lte: now,
+            },
+          },
+        },
+        {
+          $group: {
+            _id: {
+              $dateToString: {
+                format: "%Y-%m-%d",
+                date: "$createdAt",
+                timezone: "Asia/Kolkata",
+              },
+            },
+            total: {
+              $sum: 1,
+            },
+          },
+        },
+        {
+          $sort: {
+            _id: 1,
+          },
+        },
+      ]),
+
+      // ---------------- MONTHLY CHART ----------------
+
+      FormdataLeads.aggregate([
+        {
+          $match: {
+            userId: objectUserId,
+            createdAt: {
+              $gte: sixMonthsAgo,
+              $lte: now,
+            },
+          },
+        },
+        {
+          $group: {
+            _id: {
+              $dateToString: {
+                format: "%Y-%m",
+                date: "$createdAt",
+                timezone: "Asia/Kolkata",
+              },
+            },
+            total: {
+              $sum: 1,
+            },
+          },
+        },
+        {
+          $sort: {
+            _id: 1,
+          },
+        },
+      ]),
+    ]);
+
+    // ---------------- WEEKLY DATA ----------------
+
+    const weeklyMap = new Map(
+      weeklyStats.map((item) => [item._id, item.total])
+    );
+
+    const weeklyLabels: string[] = [];
+    const weeklyData: number[] = [];
+
+    for (let i = 6; i >= 0; i--) {
+      const date = new Date(todayStart);
+      date.setDate(date.getDate() - i);
+
+      const key = [
+        date.getFullYear(),
+        String(date.getMonth() + 1).padStart(2, "0"),
+        String(date.getDate()).padStart(2, "0"),
+      ].join("-");
+
+      weeklyLabels.push(
+        date.toLocaleDateString("en-IN", {
+          day: "2-digit",
+          month: "short",
+        })
+      );
+
+      weeklyData.push(weeklyMap.get(key) || 0);
+    }
+
+    // ---------------- MONTHLY DATA ----------------
+
+    const monthlyMap = new Map(
+      monthlyStats.map((item) => [item._id, item.total])
+    );
+
+    const monthlyLabels: string[] = [];
+    const monthlyData: number[] = [];
+
+    for (let i = 5; i >= 0; i--) {
+      const date = new Date(
+        now.getFullYear(),
+        now.getMonth() - i,
+        1
+      );
+
+      const key = [
+        date.getFullYear(),
+        String(date.getMonth() + 1).padStart(2, "0"),
+      ].join("-");
+
+      monthlyLabels.push(
+        date.toLocaleDateString("en-IN", {
+          month: "short",
+          year: "numeric",
+        })
+      );
+
+      monthlyData.push(monthlyMap.get(key) || 0);
+    }
+
+    // ---------------- RESPONSE ----------------
+
+    return res.status(200).json({
+      success: true,
+      message: "Dashboard data fetched successfully",
+
+      data: {
+        stats: {
+          totalForms,
+          publishedForms,
+          draftForms,
+          inactiveForms,
+
+          totalLeads,
+          todayLeads,
+          newLeads,
+          readLeads,
+          archivedLeads,
+        },
+
+        charts: {
+          weeklyLeads: {
+            labels: weeklyLabels,
+            datasets: [
+              {
+                label: "Submissions",
+                data: weeklyData,
+                borderColor: "#6366f1",
+                backgroundColor: "rgba(99,102,241,0.12)",
+                fill: true,
+                tension: 0.4,
+              },
+            ],
+          },
+
+          monthlyLeads: {
+            labels: monthlyLabels,
+            datasets: [
+              {
+                label: "Monthly Submissions",
+                data: monthlyData,
+                backgroundColor: "#6366f1",
+                borderRadius: 6,
+              },
+            ],
+          },
+
+          leadStatus: {
+            labels: ["New", "Read", "Archived"],
+            datasets: [
+              {
+                label: "Leads",
+                data: [
+                  newLeads,
+                  readLeads,
+                  archivedLeads,
+                ],
+                backgroundColor: [
+                  "#6366f1",
+                  "#10b981",
+                  "#f59e0b",
+                ],
+                borderWidth: 0,
+              },
+            ],
+          },
+
+          formStatus: {
+            labels: ["Published", "Draft", "Inactive"],
+            datasets: [
+              {
+                label: "Forms",
+                data: [
+                  publishedForms,
+                  draftForms,
+                  inactiveForms,
+                ],
+                backgroundColor: [
+                  "#10b981",
+                  "#f59e0b",
+                  "#94a3b8",
+                ],
+                borderWidth: 0,
+              },
+            ],
+          },
+        },
+
+        recentLeads,
+        recentForms,
+      },
+    });
+
+  } catch (error) {
+    next(error);
+  }
+};
+
+
+

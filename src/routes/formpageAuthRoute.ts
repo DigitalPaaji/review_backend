@@ -1,5 +1,5 @@
 import express from "express";
-import { createForm, deleteForm, getFormLeads, getMyForm, loginFormAdmin, logout, SendOtpFormAdmin, updateForm, verifyForm_Admin, verifyOtpFormAdmin } from "../controller/formAdminController";
+import { createForm, deleteForm, GetDashboardData, getFormLeads, getMyForm, loginFormAdmin, logout, SendOtpFormAdmin, updateForm, verifyForm_Admin, verifyOtpFormAdmin } from "../controller/formAdminController";
 import { VerifyFormAdmin } from "../middleware/verifyFormAdmin";
 import { upload } from "../helper/UploadMulterImages";
 const routes = express.Router()
@@ -14,5 +14,10 @@ routes.get("/get/:id",VerifyFormAdmin,getMyForm)
 routes.put("/updated/:id",VerifyFormAdmin,upload.single("banner"),updateForm)
 routes.delete("/delete/:id",VerifyFormAdmin,deleteForm)
 routes.get("/leads/:id",VerifyFormAdmin,getFormLeads)
+
+routes.get("/dashboard",VerifyFormAdmin,GetDashboardData)
+
+
+
 
 export default routes 
