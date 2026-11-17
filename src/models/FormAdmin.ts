@@ -9,7 +9,10 @@ export type FormAdminStatus =
   | "REJECTED"
   | "SUSPENDED";
 
+
 // FormAdmin interface
+
+
 export interface IFormAdmin {
   phone: string;
   email?: string;
@@ -23,7 +26,8 @@ export interface IFormAdmin {
   updatedAt?: Date;
 }
 
-// Schema
+
+
 const formAdminSchema = new Schema<IFormAdmin>(
   {
     phone: {
@@ -32,7 +36,7 @@ const formAdminSchema = new Schema<IFormAdmin>(
       unique: true,
       trim: true,
     },
-name:{
+   name:{
     type: String,
       lowercase: true,
       trim: true,
@@ -75,6 +79,16 @@ name:{
         ref: "FormPage",
       },
     ],
+  
+  //  package:{
+  //   ptype:{
+  //     type:mongoose.Schema.Types.ObjectId,
+  //     ref:"FormPackage"
+  //   },
+  //   p_validity
+  //  }
+
+
   },
   {
     timestamps: true,

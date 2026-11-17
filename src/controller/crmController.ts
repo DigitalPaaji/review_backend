@@ -5,6 +5,7 @@ import Review from "../models/reviewsModel";
 import FormAdmin from "../models/FormAdmin";
 import JWT from "jsonwebtoken"
 import redisClient from "../helper/redisServer";
+import FormPackage from "../models/packageForm";
 
 
 export const getAllClient = async(req:Request,res:Response,next:NextFunction)=>{
@@ -396,4 +397,106 @@ if(!client){
   }
 }
 
+
+
+export const createPackage =async(req:Request,res:Response,next:NextFunction)=>{
+  try {
+
+    const {title ,formLimit,fields,price,description} = req.body
+   if(!title.trim() || !formLimit || !fields){
+    return res.status(401).json({success:false,message:"Title ,Form Limit ,Fields limit and price are required"})
+   }
+
+
+
+       const allReadyPackage = await FormPackage.findOne({title:title.trim()})  
+         if(allReadyPackage){
+             return res.status(200).json({success:true,message:"Title Allready exist"})
+         }
+        const packageform = await FormPackage.create({title ,formLimit,fields,price,description})
+       return res.status(201).json({success:true,message:"Package Created",package:packageform})
+
+  } catch (error) {
+    next(error)
+  }
+}
+
+
+export const getAllpackage = async(req:Request,res:Response,next:NextFunction)=>{
+  try {
+   const allpackage = await FormPackage.find();
+
+
+   return res.status(200).json({success:true,allpackage})
+
+    
+
+  } catch (error) {
+    next(error)
+  }
+}
+
+export const updatePackageStatus = async(req:Request,res:Response,next:NextFunction)=>{
+try {
+  const packageID = req.params.id;
+  const {active} = req.body
+ const getPackage = await FormPackage.findById(packageID);
+
+ if(!getPackage){
+  return res.status(401).json({success:false,message:"Package not found"})
+ }
+
+ getPackage.active = active
+
+ await getPackage.save()
+return res.status(200).json({success:true,message:"Package Update"})
+} catch (error) {
+  next(error)
+}
+}
+
+
+export const DeletePackage=async(req:Request,res:Response,next:NextFunction)=>{
+try {
+    const packageID = req.params.id;
+ 
+ const getPackage = await FormPackage.findByIdAndDelete(packageID);
+
+ if(!getPackage){
+  return res.status(401).json({success:false,message:"Package not found"})
+ }
+
+  return res.status(200).json({success:true,message:"Package Delete"})
+} catch (error) {
+  next(error)
+}
+  
+}
+
+
+export const updatePackage = async(req:Request,res:Response,next:NextFunction)=>{
+try {
+  const packageID = req.params.id;
+  const {title,formLimit,fields,price,description} = req.body;
+    if(!title.trim() || !formLimit || !fields ){
+    return res.status(401).json({success:false,message:"Title ,Form Limit ,Fields limit and price are required"})
+   }
+ const getPackage = await FormPackage.findById(packageID);
+
+ if(!getPackage){
+  return res.status(401).json({success:false,message:"Package not found"})
+ }
+
+ getPackage.title = title
+ getPackage.formLimit = formLimit
+ getPackage.fields = fields
+ getPackage.price = price
+ getPackage.description = description
+
+ await getPackage.save()
+return res.status(200).json({success:true,message:"Package Update"})
+} catch (error) {
+  next(error)
+}
+}
 
