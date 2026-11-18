@@ -3,10 +3,7 @@ import { reviewDB } from "../helper/database";
 
 const formFieldSchema = new Schema(
   {
-    fieldId: {
-      type: String,
-      required: true,
-    },
+    
 
     label: {
       type: String,
@@ -14,11 +11,6 @@ const formFieldSchema = new Schema(
       trim: true,
     },
 
-    name: {
-      type: String,
-      required: true,
-      trim: true,
-    },
 
     type: {
       type: String,
@@ -36,15 +28,9 @@ const formFieldSchema = new Schema(
         "month",
         "week",
         "color",
-        "range",
-        "file",
-        "image",
         "select",
         "radio",
         "checkbox",
-        "toggle",
-        "hidden",
-        "heading",
         "paragraph",
         "divider",
       ],
@@ -56,10 +42,7 @@ const formFieldSchema = new Schema(
       default: "",
     },
 
-    defaultValue: {
-      type: Schema.Types.Mixed,
-      default: "",
-    },
+   
 
     helpText: {
       type: String,
@@ -82,73 +65,9 @@ const formFieldSchema = new Schema(
     },
 
     // Select, Radio, Checkbox options
-    options: [
-      {
-        label: String,
-        value: String,
-      },
-    ],
+    options: [{type:String}],
 
-    // Input validation
-    validation: {
-      min: Number,
-      max: Number,
-      minLength: Number,
-      maxLength: Number,
-      pattern: String,
-      accept: String,
-      multiple: {
-        type: Boolean,
-        default: false,
-      },
-    },
-
-
-    size: {
-      width: {
-        type: Number,
-        default: 12, // 1-12 grid columns
-        min: 1,
-        max: 12,
-      },
-
-      height: {
-        type: Number,
-        default: 44,
-        min: 1,
-      },
-
-      unit: {
-        type: String,
-        enum: ["px", "rem", "%"],
-        default: "px",
-      },
-
-      rows: {
-        type: Number,
-        default: 4,
-      },
-    },
-
- 
-    style: {
-      backgroundColor: String,
-      textColor: String,
-      borderColor: String,
-      borderRadius: Number,
-      fontSize: Number,
-      fontWeight: String,
-      alignment: {
-        type: String,
-        enum: ["left", "center", "right"],
-        default: "left",
-      },
-    },
-
-    order: {
-      type: Number,
-      default: 0,
-    },
+    
   },
   { _id: true }
 );
@@ -179,45 +98,7 @@ const FormPageSchema= new Schema({
       type: [formFieldSchema],
       default: [],
     },
- settings: {
-      columns: {
-        type: Number,
-        default: 12,
-        min: 1,
-        max: 12,
-      },
 
-      backgroundColor: {
-        type: String,
-        default: "#ffffff",
-      },
-
-      formWidth: {
-        type: Number,
-        default: 700,
-      },
-
-      formAlignment: {
-        type: String,
-        enum: ["left", "center", "right"],
-        default: "center",
-      },
-
-      submitButtonText: {
-        type: String,
-        default: "Submit",
-      },
-
-      submitButtonColor: {
-        type: String,
-        default: "#2563eb",
-      },
-
-      successMessage: {
-        type: String,
-        default: "Form submitted successfully!",
-      },
-    },
 
     status: {
       type: String,
@@ -225,6 +106,11 @@ const FormPageSchema= new Schema({
       default: "published",
     },
 
+    media:{
+      type:String,
+      enum:[null,"email","whatsapp","SMS"],
+      default:null,
+    },  
     createdBy: {
       type: Schema.Types.ObjectId,
       ref: "FormAdmin",

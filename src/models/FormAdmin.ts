@@ -24,6 +24,7 @@ export interface IFormAdmin {
   formPage: Types.ObjectId[];
   createdAt?: Date;
   updatedAt?: Date;
+  wallet_amount:Number;
 }
 
 
@@ -80,6 +81,11 @@ const formAdminSchema = new Schema<IFormAdmin>(
       },
     ],
   
+wallet_amount:{
+  type:Number,
+  default:0
+}
+
   //  package:{
   //   ptype:{
   //     type:mongoose.Schema.Types.ObjectId,

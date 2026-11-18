@@ -281,7 +281,7 @@ export const createForm = async (
       title,
       description,
       fields: rawFields,
-      settings: rawSettings,
+  
       status,
     } = req.body;
 
@@ -297,7 +297,7 @@ export const createForm = async (
 
     // Parse multipart JSON fields
     let fields;
-    let settings;
+   
 
     try {
       fields =
@@ -305,10 +305,6 @@ export const createForm = async (
           ? JSON.parse(rawFields)
           : rawFields;
 
-      settings =
-        typeof rawSettings === "string"
-          ? JSON.parse(rawSettings)
-          : rawSettings;
     } catch {
       if (imagepath) deleteImage(imagepath);
 
@@ -328,14 +324,6 @@ export const createForm = async (
       });
     }
 
-    if (!settings || typeof settings !== "object" || Array.isArray(settings)) {
-      if (imagepath) deleteImage(imagepath);
-
-      return res.status(400).json({
-        success: false,
-        message: "Invalid form settings",
-      });
-    }
 
     // Find admin
     const formAdmin = await FormAdmin.findById(user._id);
@@ -371,7 +359,6 @@ export const createForm = async (
       title: title.trim(),
       slug,
       description,
-      settings,
       bannerImage: imagepath,
       status: status || "draft",
       createdBy: formAdmin._id,
@@ -441,7 +428,7 @@ export const updateForm = async (
       title,
       description,
       fields: rawFields,
-      settings: rawSettings,
+    
       status,
       removeBanner,
     } = req.body;
@@ -473,7 +460,7 @@ export const updateForm = async (
 
     // Parse JSON fields
     let fields;
-    let settings;
+
 
     try {
       fields =
@@ -481,10 +468,7 @@ export const updateForm = async (
           ? JSON.parse(rawFields)
           : rawFields;
 
-      settings =
-        typeof rawSettings === "string"
-          ? JSON.parse(rawSettings)
-          : rawSettings;
+    
     } catch {
       if (newImagePath) deleteImage(newImagePath);
 
@@ -504,27 +488,14 @@ export const updateForm = async (
       });
     }
 
-    if (
-      !settings ||
-      typeof settings !== "object" ||
-      Array.isArray(settings)
-    ) {
-      if (newImagePath) deleteImage(newImagePath);
+ 
 
-      return res.status(400).json({
-        success: false,
-        message: "Invalid form settings",
-      });
-    }
-
-    // Save previous banner path
     const oldImagePath = formPage.bannerImage;
 
     // Update form data
     formPage.title = title.trim();
     formPage.description = description || "";
     formPage.fields = fields;
-    formPage.settings = settings;
     formPage.status = status || "draft";
 
     // Banner handling
@@ -570,6 +541,24 @@ export const updateForm = async (
     next(error);
   }
 };
+
+
+
+export const getAllForm = async(  req: Request,res: Response, next: NextFunction,)=>{
+try {
+   const user = req.form as any;
+    
+   const allForms = await FormPage.find({createdBy:user._id}).select("title description bannerImage status media slug")
+
+   return res.status(200).json({success:true,allForms})
+
+
+} catch (error) {
+  next(error)
+}
+
+  }
+
 
 
 export const deleteForm = async (
@@ -772,7 +761,7 @@ export const SubmitedForm = async (
 
     return res
       .status(201)
-      .json({ success: true, message: formPage.settings.successMessage });
+      .json({ success: true, message: "Form Submited"});
   } catch (error) {
     next(error);
   }
