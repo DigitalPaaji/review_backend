@@ -1120,4 +1120,28 @@ export const GetDashboardData = async (
 };
 
 
+export const getAllData = async( req: Request,res: Response,next: NextFunction)=>{
+try {
+   const user = req.form as any;
+   const userId = user?._id;
+    if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
+      return res.status(401).json({
+        success: false,
+        message: "Unauthorized user",
+      });
+    }
+    const admin = await FormAdmin.findById(userId);
+    if(!admin){
+       return res.status(401).json({success:false,message:"Admin not Found"})
+    }
+
+
+     return res.status(200).json({success:true,admin})
+
+  
+} catch (error) {
+  next(error)
+}
+}
+
 

@@ -6,6 +6,7 @@ import FormAdmin from "../models/FormAdmin";
 import JWT from "jsonwebtoken"
 import redisClient from "../helper/redisServer";
 import FormPackage from "../models/packageForm";
+import LeadRate from "../models/FormLeadRate";
 
 
 export const getAllClient = async(req:Request,res:Response,next:NextFunction)=>{
@@ -352,6 +353,148 @@ return res.status(200).json({success:true,url})
 }
 
 
+export const getAdminUser =async(req:Request,res:Response,next:NextFunction)=>{
+try {
+  
+const clientId = req.params.id;
+const client = await FormAdmin.findById(clientId)
+
+if(!client){
+  return res.status(401).json({success:false,message:"User not Found"})
+}
+
+
+
+return res.status(200).json({success:true,client})
+
+
+} catch (error) {
+  next(error)
+}
+
+}
+
+
+const SEND_LEAD_OPTIONS = ['null', 'email', 'whatsapp', 'SMS']
+const STATUS_OPTIONS = ['PENDING', 'APPROVED', 'REJECTED', 'SUSPENDED']
+
+// Only these fields can be updated from the admin edit page
+const ALLOWED_FIELDS = [
+  'name',
+  'phone',
+  'sendLead',
+  'status',
+  'active',
+  'formpageLimit',
+  'wallet_amount',
+] as const
+
+
+
+export const updatFormUser = async(req:Request,res:Response,next:NextFunction)=>{
+  try {
+    const clientId = req.params.id;
+
+const client = await FormAdmin.findById(clientId)
+
+ if (!client) {
+      return res.status(404).json({ success: false, message: 'Client not found' })
+    }
+
+     const updates: Record<string, any> = {}
+    for (const field of ALLOWED_FIELDS) {
+      if (req.body[field] !== undefined) {
+        updates[field] = req.body[field]
+      }
+    }
+
+    if (Object.keys(updates).length === 0) {
+      return res.status(400).json({ success: false, message: 'No valid fields to update' })
+    }
+
+    // 4. Validate each field
+    if (updates.name !== undefined) {
+      if (typeof updates.name !== 'string' || !updates.name.trim()) {
+        return res.status(400).json({ success: false, message: 'Name is required' })
+      }
+      updates.name = updates.name.trim()
+    }
+
+    if (updates.phone !== undefined) {
+      const phone = String(updates.phone).trim()
+      if (!/^\d{10}$/.test(phone)) {
+        return res
+          .status(400)
+          .json({ success: false, message: 'Phone must be a 10 digit number' })
+      }
+      // check duplicate phone on another client
+      const exists = await FormAdmin.findOne({ phone, _id: { $ne: clientId } })
+      if (exists) {
+        return res
+          .status(409)
+          .json({ success: false, message: 'Phone already in use' })
+      }
+      updates.phone = phone
+    }
+
+    if (updates.sendLead !== undefined && !SEND_LEAD_OPTIONS.includes(updates.sendLead)) {
+      return res.status(400).json({
+        success: false,
+        message: `sendLead must be one of: ${SEND_LEAD_OPTIONS.join(', ')}`,
+      })
+    }
+
+    if (updates.status !== undefined && !STATUS_OPTIONS.includes(updates.status)) {
+      return res.status(400).json({
+        success: false,
+        message: `status must be one of: ${STATUS_OPTIONS.join(', ')}`,
+      })
+    }
+
+    if (updates.active !== undefined && typeof updates.active !== 'boolean') {
+      return res
+        .status(400)
+        .json({ success: false, message: 'active must be true or false' })
+    }
+
+    if (updates.formpageLimit !== undefined) {
+      const limit = Number(updates.formpageLimit)
+      if (!Number.isInteger(limit) || limit < 0) {
+        return res.status(400).json({
+          success: false,
+          message: 'formpageLimit must be a non-negative whole number',
+        })
+      }
+      updates.formpageLimit = limit
+    }
+
+    if (updates.wallet_amount !== undefined) {
+      const amount = Number(updates.wallet_amount)
+      if (Number.isNaN(amount) || amount < 0) {
+        return res.status(400).json({
+          success: false,
+          message: 'wallet_amount must be a non-negative number',
+        })
+      }
+      updates.wallet_amount = amount
+    }
+
+    // 5. Apply updates and save
+    client.set(updates)
+    await client.save()
+
+    return res.status(200).json({
+      success: true,
+      message: 'Client updated successfully',
+      client,
+    })
+
+  } catch (error) {
+    next(error)
+  }
+}
+
+
 export const getbyToken= async(req:Request,res:Response,next:NextFunction)=>{
   try {
     const {token} = req.body;
@@ -500,3 +643,77 @@ return res.status(200).json({success:true,message:"Package Update"})
 }
 }
 
+
+
+export const CreateLeadRate=async(req:Request,res:Response,next:NextFunction)=>{
+try {
+  const {leadRateName,amount}=req.body
+
+  const isExist = await LeadRate.exists({leadRateName})
+if (isExist) {
+  return res.status(400).json({
+    success: false,
+    message: "Lead rate already exists",
+  });
+}
+
+   const leadRate = await LeadRate.create({leadRateName,amount})
+
+  return res.status(201).json({
+    success: true,
+  leadRate
+  });
+
+
+
+
+} catch (error) {
+  next(error)
+}
+}
+
+export const getAllLeadRate=async(req:Request,res:Response,next:NextFunction)=>{
+  try {
+    
+    const allLead = await LeadRate.find()
+         
+return res.status(200).json({success:true,allLead})
+
+  } catch (error) {
+    next(error)
+  }
+}
+
+export const upDateLeadRate = async(req:Request,res:Response,next:NextFunction)=>{
+  try {
+    
+const leadRateId = req.params.id;
+const {leadRateName,amount}=req.body
+
+const leadrate = await LeadRate.findById(leadRateId);
+   if(!leadrate){return res.status(200).json({success:false,message:"Lead rate not found"})}
+
+  leadrate.leadRateName=leadRateName
+  leadrate.amount=amount
+  await leadrate.save();
+
+return res.status(200).json({success:true,message:"Updates"})
+
+  } catch (error) {
+    next(error)
+  }
+}
+
+
+export const deleteLeadRate= async(req:Request,res:Response,next:NextFunction)=>{
+  try {
+const leadRateId = req.params.id; 
+
+   const leadrate = await LeadRate.findByIdAndDelete(leadRateId);
+   if(!leadrate){return res.status(200).json({success:false,message:"Lead rate not found"})}
+
+  return res.status(200).json({success:true,message:"Lead Rate Deleted"})
+  } catch (error) {
+    next(error)
+  }
+}

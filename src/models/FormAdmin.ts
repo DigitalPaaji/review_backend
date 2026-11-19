@@ -25,6 +25,7 @@ export interface IFormAdmin {
   createdAt?: Date;
   updatedAt?: Date;
   wallet_amount:Number;
+  sendLead:string;
 }
 
 
@@ -81,10 +82,23 @@ const formAdminSchema = new Schema<IFormAdmin>(
       },
     ],
   
-wallet_amount:{
-  type:Number,
-  default:0
-}
+   wallet_amount:{
+   type:Number,
+   default:0
+    },
+    sendLead:{
+      type:String,
+      enum:["null","email","whatsapp","SMS"],
+      default:"null"
+    }
+    
+
+
+
+
+
+
+
 
   //  package:{
   //   ptype:{
