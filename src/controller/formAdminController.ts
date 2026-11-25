@@ -9,6 +9,7 @@ import FormPage from "../models/formPageSchema";
 import FormdataLeads from "../models/formSendSchema";
 import { deleteImage } from "../helper/deleteImage";
 import mongoose from "mongoose";
+import { emailQueue } from "../queues/email.queue";
 
 export const SendOtpFormAdmin = async (
   req: Request,
@@ -229,14 +230,16 @@ export const loginFormAdmin = async (
   }
 };
 
-export const logout= async( req: Request,res: Response,next: NextFunction)=>{
-try {
-
- res.clearCookie("form_admin_token", {
+export const logout = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    res.clearCookie("form_admin_token", {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      sameSite:
-        process.env.NODE_ENV === "production" ? "none" : "lax",
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
       path: "/",
     });
 
@@ -244,11 +247,10 @@ try {
       success: true,
       message: "Logout successfully",
     });
-
-} catch (error) {
-  next(error)
-}
-}
+  } catch (error) {
+    next(error);
+  }
+};
 
 export const verifyForm_Admin = async (
   req: Request,
@@ -264,15 +266,12 @@ export const verifyForm_Admin = async (
   }
 };
 
-
 export const createForm = async (
   req: Request,
   res: Response,
   next: NextFunction,
 ) => {
-  const imagepath = req.file?.filename
-    ? `/uploads/${req.file.filename}`
-    : null;
+  const imagepath = req.file?.filename ? `/uploads/${req.file.filename}` : null;
 
   try {
     const user = req.form as any;
@@ -281,7 +280,7 @@ export const createForm = async (
       title,
       description,
       fields: rawFields,
-  
+      leadEmail,
       status,
     } = req.body;
 
@@ -297,14 +296,10 @@ export const createForm = async (
 
     // Parse multipart JSON fields
     let fields;
-   
 
     try {
       fields =
-        typeof rawFields === "string"
-          ? JSON.parse(rawFields)
-          : rawFields;
-
+        typeof rawFields === "string" ? JSON.parse(rawFields) : rawFields;
     } catch {
       if (imagepath) deleteImage(imagepath);
 
@@ -323,7 +318,6 @@ export const createForm = async (
         message: "Fields must be an array",
       });
     }
-
 
     // Find admin
     const formAdmin = await FormAdmin.findById(user._id);
@@ -359,6 +353,7 @@ export const createForm = async (
       title: title.trim(),
       slug,
       description,
+      leadEmail,
       bannerImage: imagepath,
       status: status || "draft",
       createdBy: formAdmin._id,
@@ -382,7 +377,6 @@ export const createForm = async (
     next(error);
   }
 };
-
 
 export const getMyForm = async (
   req: Request,
@@ -410,7 +404,6 @@ export const getMyForm = async (
   }
 };
 
-
 export const updateForm = async (
   req: Request,
   res: Response,
@@ -428,7 +421,7 @@ export const updateForm = async (
       title,
       description,
       fields: rawFields,
-    
+      leadEmail,
       status,
       removeBanner,
     } = req.body;
@@ -461,14 +454,9 @@ export const updateForm = async (
     // Parse JSON fields
     let fields;
 
-
     try {
       fields =
-        typeof rawFields === "string"
-          ? JSON.parse(rawFields)
-          : rawFields;
-
-    
+        typeof rawFields === "string" ? JSON.parse(rawFields) : rawFields;
     } catch {
       if (newImagePath) deleteImage(newImagePath);
 
@@ -488,14 +476,13 @@ export const updateForm = async (
       });
     }
 
- 
-
     const oldImagePath = formPage.bannerImage;
 
     // Update form data
     formPage.title = title.trim();
     formPage.description = description || "";
     formPage.fields = fields;
+    formPage.leadEmail = leadEmail;
     formPage.status = status || "draft";
 
     // Banner handling
@@ -511,10 +498,7 @@ export const updateForm = async (
     await formPage.save();
 
     // Delete old image only after successful database update
-    if (
-      oldImagePath &&
-      oldImagePath !== formPage.bannerImage
-    ) {
+    if (oldImagePath && oldImagePath !== formPage.bannerImage) {
       deleteImage(oldImagePath);
     }
 
@@ -542,36 +526,36 @@ export const updateForm = async (
   }
 };
 
-
-
-export const getAllForm = async(  req: Request,res: Response, next: NextFunction,)=>{
-try {
-   const user = req.form as any;
-    
-   const allForms = await FormPage.find({createdBy:user._id}).select("title description bannerImage status media slug")
-
-   return res.status(200).json({success:true,allForms})
-
-
-} catch (error) {
-  next(error)
-}
-
-  }
-
-
-
-export const deleteForm = async (
+export const getAllForm = async (
   req: Request,
   res: Response,
   next: NextFunction,
 ) => {
   try {
+    const user = req.form as any;
+
+    const allForms = await FormPage.find({ createdBy: user._id }).select(
+      "title description bannerImage status media slug",
+    );
+
+    return res.status(200).json({ success: true, allForms });
+  } catch (error) {
+    next(error);
+  }
+};
+
+
+
+
+
+
+
+
+export const deleteForm = async (req: Request,res: Response,next: NextFunction) => {
+  try {
     const formId = req.params.id;
     const user = req.form as any;
 
-   
-    // Check admin
     const formAdmin = await FormAdmin.findById(user._id);
 
     if (!formAdmin) {
@@ -618,10 +602,7 @@ export const deleteForm = async (
   }
 };
 
-
-
-
- const VALID_STATUSES = ["new", "read", "archived"] as const;
+const VALID_STATUSES = ["new", "read", "archived"] as const;
 
 export const getFormLeads = async (
   req: Request,
@@ -698,20 +679,10 @@ export const getFormLeads = async (
         hasPrevPage: page > 1,
       },
     });
-
   } catch (error) {
     next(error);
   }
 };
-
-
-
-
-
-
-
-
-
 
 export const getForm = async (
   req: Request,
@@ -745,11 +716,13 @@ export const SubmitedForm = async (
 
     const formPage = await FormPage.findById(formId);
 
-    if (!formPage) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Form Page not Found" });
-    }
+    const email = Object.entries(submissionData).find(([key]) =>
+      key.toLowerCase().includes("email"),
+    )?.[1];
+
+
+
+
 
     await FormdataLeads.create({
       formId: formPage._id,
@@ -759,25 +732,42 @@ export const SubmitedForm = async (
       ipAddress,
     });
 
-    return res
-      .status(201)
-      .json({ success: true, message: "Form Submited"});
+    if (email) {
+      
+      await emailQueue.add("send-email", {
+        to: email as string,
+        submissionData:null
+      });
+    }
+
+if(formPage.leadEmail){
+
+
+  await emailQueue.add("send-email-to-client", {
+        to: email as string,
+        submissionData: JSON.stringify(submissionData)
+      });
+}
+
+
+
+
+    return res.status(201).json({ success: true, message: "Form Submited" });
   } catch (error) {
     next(error);
   }
 };
 
-
 export const GetDashboardData = async (
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) => {
   try {
-   const user = req.form as any;
-   const userId = user?._id;
+    const user = req.form as any;
+    const userId = user?._id;
 
-   if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
+    if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
       return res.status(401).json({
         success: false,
         message: "Unauthorized user",
@@ -800,11 +790,7 @@ export const GetDashboardData = async (
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6);
 
     // Last 6 months
-    const sixMonthsAgo = new Date(
-      now.getFullYear(),
-      now.getMonth() - 5,
-      1
-    );
+    const sixMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 5, 1);
 
     const [
       totalForms,
@@ -823,7 +809,6 @@ export const GetDashboardData = async (
       weeklyStats,
       monthlyStats,
     ] = await Promise.all([
-
       // ---------------- FORMS ----------------
 
       FormPage.countDocuments({
@@ -964,7 +949,7 @@ export const GetDashboardData = async (
     // ---------------- WEEKLY DATA ----------------
 
     const weeklyMap = new Map(
-      weeklyStats.map((item) => [item._id, item.total])
+      weeklyStats.map((item) => [item._id, item.total]),
     );
 
     const weeklyLabels: string[] = [];
@@ -984,7 +969,7 @@ export const GetDashboardData = async (
         date.toLocaleDateString("en-IN", {
           day: "2-digit",
           month: "short",
-        })
+        }),
       );
 
       weeklyData.push(weeklyMap.get(key) || 0);
@@ -993,18 +978,14 @@ export const GetDashboardData = async (
     // ---------------- MONTHLY DATA ----------------
 
     const monthlyMap = new Map(
-      monthlyStats.map((item) => [item._id, item.total])
+      monthlyStats.map((item) => [item._id, item.total]),
     );
 
     const monthlyLabels: string[] = [];
     const monthlyData: number[] = [];
 
     for (let i = 5; i >= 0; i--) {
-      const date = new Date(
-        now.getFullYear(),
-        now.getMonth() - i,
-        1
-      );
+      const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
 
       const key = [
         date.getFullYear(),
@@ -1015,7 +996,7 @@ export const GetDashboardData = async (
         date.toLocaleDateString("en-IN", {
           month: "short",
           year: "numeric",
-        })
+        }),
       );
 
       monthlyData.push(monthlyMap.get(key) || 0);
@@ -1073,16 +1054,8 @@ export const GetDashboardData = async (
             datasets: [
               {
                 label: "Leads",
-                data: [
-                  newLeads,
-                  readLeads,
-                  archivedLeads,
-                ],
-                backgroundColor: [
-                  "#6366f1",
-                  "#10b981",
-                  "#f59e0b",
-                ],
+                data: [newLeads, readLeads, archivedLeads],
+                backgroundColor: ["#6366f1", "#10b981", "#f59e0b"],
                 borderWidth: 0,
               },
             ],
@@ -1093,16 +1066,8 @@ export const GetDashboardData = async (
             datasets: [
               {
                 label: "Forms",
-                data: [
-                  publishedForms,
-                  draftForms,
-                  inactiveForms,
-                ],
-                backgroundColor: [
-                  "#10b981",
-                  "#f59e0b",
-                  "#94a3b8",
-                ],
+                data: [publishedForms, draftForms, inactiveForms],
+                backgroundColor: ["#10b981", "#f59e0b", "#94a3b8"],
                 borderWidth: 0,
               },
             ],
@@ -1113,17 +1078,19 @@ export const GetDashboardData = async (
         recentForms,
       },
     });
-
   } catch (error) {
     next(error);
   }
 };
 
-
-export const getAllData = async( req: Request,res: Response,next: NextFunction)=>{
-try {
-   const user = req.form as any;
-   const userId = user?._id;
+export const getAllData = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const user = req.form as any;
+    const userId = user?._id;
     if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
       return res.status(401).json({
         success: false,
@@ -1131,17 +1098,14 @@ try {
       });
     }
     const admin = await FormAdmin.findById(userId);
-    if(!admin){
-       return res.status(401).json({success:false,message:"Admin not Found"})
+    if (!admin) {
+      return res
+        .status(401)
+        .json({ success: false, message: "Admin not Found" });
     }
 
-
-     return res.status(200).json({success:true,admin})
-
-  
-} catch (error) {
-  next(error)
-}
-}
-
-
+    return res.status(200).json({ success: true, admin });
+  } catch (error) {
+    next(error);
+  }
+};

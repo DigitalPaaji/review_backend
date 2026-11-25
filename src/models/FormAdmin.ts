@@ -42,7 +42,7 @@ const formAdminSchema = new Schema<IFormAdmin>(
     type: String,
       lowercase: true,
       trim: true,
-  required: true,
+   required: true,
       
 },
     email: {

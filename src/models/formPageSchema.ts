@@ -98,18 +98,21 @@ const FormPageSchema= new Schema({
       type: [formFieldSchema],
       default: [],
     },
-
+   leadEmail:{
+      type: String,
+      trim: true,
+   },
 
     status: {
       type: String,
       enum: ["draft", "published", "inactive"],
       default: "published",
     },
-
+    
     media:{
       type:String,
-      enum:[null,"email","whatsapp","SMS"],
-      default:null,
+      enum:["null","email","whatsapp","SMS"],
+      default:"null",
     },  
     createdBy: {
       type: Schema.Types.ObjectId,
