@@ -94,6 +94,10 @@ const FormPageSchema= new Schema({
       type:String,
       default:null
     },
+    logo:{
+      type:String,
+      default:null
+    },
       fields: {
       type: [formFieldSchema],
       default: [],
@@ -123,6 +127,10 @@ const FormPageSchema= new Schema({
       type: Schema.Types.ObjectId,
       ref: "FormAdmin",
     },
+    submitCount:{
+      type:Number,
+      default:0
+    }
 },{
     timestamps: true,
   })

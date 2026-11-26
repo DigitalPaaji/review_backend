@@ -271,8 +271,18 @@ export const createForm = async (
   res: Response,
   next: NextFunction,
 ) => {
-  const imagepath = req.file?.filename ? `/uploads/${req.file.filename}` : null;
+  const files = req.files as {
+  logo?: Express.Multer.File[];
+  banner?: Express.Multer.File[];
+};
 
+const imagepath = files.banner?.[0]?.filename
+  ? `/uploads/${files.banner[0].filename}`
+  : null;
+
+const logopath = files.logo?.[0]?.filename
+  ? `/uploads/${files.logo[0].filename}`
+  : null;
   try {
     const user = req.form as any;
 
@@ -289,6 +299,7 @@ export const createForm = async (
     // Validate title
     if (!title?.trim()) {
       if (imagepath) deleteImage(imagepath);
+      if (logopath) deleteImage(logopath);
 
       return res.status(400).json({
         success: false,
@@ -304,6 +315,7 @@ export const createForm = async (
         typeof rawFields === "string" ? JSON.parse(rawFields) : rawFields;
     } catch {
       if (imagepath) deleteImage(imagepath);
+      if (logopath) deleteImage(logopath);
 
       return res.status(400).json({
         success: false,
@@ -314,6 +326,7 @@ export const createForm = async (
     // Validate parsed data
     if (!Array.isArray(fields)) {
       if (imagepath) deleteImage(imagepath);
+      if (logopath) deleteImage(logopath);
 
       return res.status(400).json({
         success: false,
@@ -326,6 +339,7 @@ export const createForm = async (
 
     if (!formAdmin) {
       if (imagepath) deleteImage(imagepath);
+      if (logopath) deleteImage(logopath);
 
       return res.status(401).json({
         success: false,
@@ -336,6 +350,7 @@ export const createForm = async (
     // Check form page limit
     if (formAdmin.formpageLimit <= formAdmin.formPage.length) {
       if (imagepath) deleteImage(imagepath);
+      if (logopath) deleteImage(logopath);
 
       return res.status(403).json({
         success: false,
@@ -358,6 +373,7 @@ export const createForm = async (
       description,
       leadEmail,
       bannerImage: imagepath,
+      logo:logopath,
       status: status || "draft",
       createdBy: formAdmin._id,
       formcolors:JSON.parse(formcolors),
@@ -379,6 +395,7 @@ export const createForm = async (
     });
   } catch (error) {
     if (imagepath) deleteImage(imagepath);
+    if (logopath) deleteImage(logopath);
     next(error);
   }
 };
@@ -414,9 +431,18 @@ export const updateForm = async (
   res: Response,
   next: NextFunction,
 ) => {
-  const newImagePath = req.file?.filename
-    ? `/uploads/${req.file.filename}`
-    : null;
+   const files = req.files as {
+  logo?: Express.Multer.File[];
+  banner?: Express.Multer.File[];
+};
+
+const newImagePath = files.banner?.[0]?.filename
+  ? `/uploads/${files.banner[0].filename}`
+  : null;
+
+const logopath = files.logo?.[0]?.filename
+  ? `/uploads/${files.logo[0].filename}`
+  : null;
 
   try {
     const formId = req.params.id;
@@ -436,6 +462,7 @@ export const updateForm = async (
     // Validate title
     if (!title?.trim()) {
       if (newImagePath) deleteImage(newImagePath);
+      if (logopath) deleteImage(logopath);
 
       return res.status(400).json({
         success: false,
@@ -451,6 +478,7 @@ export const updateForm = async (
 
     if (!formPage) {
       if (newImagePath) deleteImage(newImagePath);
+      if (logopath) deleteImage(logopath);
 
       return res.status(404).json({
         success: false,
@@ -466,6 +494,7 @@ export const updateForm = async (
         typeof rawFields === "string" ? JSON.parse(rawFields) : rawFields;
     } catch {
       if (newImagePath) deleteImage(newImagePath);
+      if (logopath) deleteImage(logopath);
 
       return res.status(400).json({
         success: false,
@@ -476,6 +505,7 @@ export const updateForm = async (
     // Validate fields
     if (!Array.isArray(fields)) {
       if (newImagePath) deleteImage(newImagePath);
+      if (logopath) deleteImage(logopath);
 
       return res.status(400).json({
         success: false,
@@ -494,10 +524,15 @@ export const updateForm = async (
      formPage.formcolors= JSON.parse(formcolors),
       formPage.consents= JSON.parse(consents)
     // Banner handling
+    if(logopath){
+     formPage.logo && await deleteImage(formPage.logo)
+      formPage.logo= logopath
+    }
     if (newImagePath) {
       // New image uploaded: replace old image
       formPage.bannerImage = newImagePath;
-    } else if (removeBanner === "true" || removeBanner === true) {
+    }
+     else if (removeBanner === "true" || removeBanner === true) {
       // User requested banner removal
       formPage.bannerImage = null;
     }
@@ -529,6 +564,9 @@ export const updateForm = async (
     if (newImagePath) {
       deleteImage(newImagePath);
     }
+    if (logopath) {
+      deleteImage(logopath);
+    }
 
     next(error);
   }
@@ -543,7 +581,7 @@ export const getAllForm = async (
     const user = req.form as any;
 
     const allForms = await FormPage.find({ createdBy: user._id }).select(
-      "title description bannerImage status media slug",
+      "title description logo status media slug submitCount",
     );
 
     return res.status(200).json({ success: true, allForms });
@@ -757,7 +795,10 @@ if(formPage.leadEmail){
       });
 }
 
+  formPage.submitCount++
 
+
+  await formPage.save()
 
 
     return res.status(201).json({ success: true, message: "Form Submited" });
