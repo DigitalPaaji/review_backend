@@ -282,6 +282,8 @@ export const createForm = async (
       fields: rawFields,
       leadEmail,
       status,
+      formcolors,
+      consents,
     } = req.body;
 
     // Validate title
@@ -348,7 +350,8 @@ export const createForm = async (
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/^-|-$/g, "")}-${Date.now()}`;
 
-    // Create form
+     console.log(formcolors)
+     console.log(consents)
     const formCreateData = await FormPage.create({
       title: title.trim(),
       slug,
@@ -357,6 +360,8 @@ export const createForm = async (
       bannerImage: imagepath,
       status: status || "draft",
       createdBy: formAdmin._id,
+      formcolors:JSON.parse(formcolors),
+      consents:JSON.parse(consents),
       fields,
     });
 
@@ -424,6 +429,8 @@ export const updateForm = async (
       leadEmail,
       status,
       removeBanner,
+      formcolors,
+      consents
     } = req.body;
 
     // Validate title
@@ -478,13 +485,14 @@ export const updateForm = async (
 
     const oldImagePath = formPage.bannerImage;
 
-    // Update form data
+   
     formPage.title = title.trim();
     formPage.description = description || "";
     formPage.fields = fields;
     formPage.leadEmail = leadEmail;
     formPage.status = status || "draft";
-
+     formPage.formcolors= JSON.parse(formcolors),
+      formPage.consents= JSON.parse(consents)
     // Banner handling
     if (newImagePath) {
       // New image uploaded: replace old image

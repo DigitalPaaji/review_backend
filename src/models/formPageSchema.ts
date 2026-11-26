@@ -108,7 +108,12 @@ const FormPageSchema= new Schema({
       enum: ["draft", "published", "inactive"],
       default: "published",
     },
-    
+    formcolors:{
+      bg_form:{type:String,default:"#F7F7F8"},
+      label_form:{type:String,default:"#364153"},
+      title_form:{type:String,default:"#252525"},
+    },
+    consents:[{type:String}],
     media:{
       type:String,
       enum:["null","email","whatsapp","SMS"],
