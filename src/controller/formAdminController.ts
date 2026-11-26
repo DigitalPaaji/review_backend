@@ -581,7 +581,7 @@ export const getAllForm = async (
     const user = req.form as any;
 
     const allForms = await FormPage.find({ createdBy: user._id }).select(
-      "title description logo status media slug submitCount",
+      "title description bannerImage status media slug  submitCount",
     );
 
     return res.status(200).json({ success: true, allForms });
