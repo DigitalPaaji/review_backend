@@ -790,7 +790,7 @@ if(formPage.leadEmail){
 
 
   await emailQueue.add("send-email-to-client", {
-        to: email as string,
+        to: formPage.leadEmail  as string,
         submissionData: JSON.stringify(submissionData)
       });
 }
