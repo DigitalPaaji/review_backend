@@ -139,7 +139,7 @@ html: `
               </p>
 
               <p style="margin:0;color:#94a3b8;font-size:12px;line-height:1.7;">
-                This is an automated confirmation email.<br/>
+                <a href="https://digitalpaaji.com  >Digital Paaji</a> .<br/>
                 © ${new Date().getFullYear()} All rights reserved.
               </p>
 
@@ -283,6 +283,7 @@ export const sendToClient = async(to:string,submissionData:string)=>{
                   <p style="margin-top:30px;color:#475569;font-size:14px;">
                     Best Regards,<br/>
                     <strong style="color:#4338ca;">Website Lead System</strong>
+                    <a href="https://digitalpaaji.com style="color:#4338ca;">Digital Paaji</a>
                   </p>
 
                 </td>
@@ -291,7 +292,7 @@ export const sendToClient = async(to:string,submissionData:string)=>{
               <tr>
                 <td align="center" style="background:#f8fafc;padding:22px;border-top:1px solid #e2e8f0;">
                   <p style="margin:0;color:#94a3b8;font-size:12px;">
-                    New Lead Notification · © ${currentYear}
+                    <a href="https://digitalpaaji.com  >Digital Paaji</a> · © ${currentYear}
                   </p>
                 </td>
               </tr>
